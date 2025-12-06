@@ -102,6 +102,27 @@ static Block *find_last_block(Block *base)
     return ptr;
 }
 
+/**
+ * find_free_block
+ * * Traverses the linked list to find the first free block that fits.
+ * * @param last A pointer to a Block pointer. We use this to return the
+ * last visited block if we don't find a free one. (Optimization)
+ * @param size The size required.
+ * @return The found free block, or NULL if none found.
+ */
+static Block *find_free_block(Block **last, size_t size)
+{
+    Block *current = global_base;
+
+    while (current && !(current->free && current->size >= size))
+    {
+        *last = current;
+        current = current->next;
+    }
+
+    return current;
+}
+
 /* --- Public API --- */
 
 /**
@@ -135,18 +156,26 @@ void *malloc(size_t size)
     }
     else
     {
-        Block *ptr = global_base;
+        Block *last = global_base;
 
-        while (ptr->next != NULL)
+        // Attempt to find a free block to reuse
+        block = find_free_block(&last, size);
+
+        // If one is found
+        if (block)
         {
-            ptr = ptr->next;
+            block->free = 0;
+            block->magic = 0x77777777; // Different magic number for freed blocks.
         }
-
-        ptr = request_space(ptr, size);
-
-        if (!ptr)
+        // One is not found
+        else
         {
-            return NULL;
+            block = request_space(last, size);
+
+            if (!block)
+            {
+                return NULL; // Potential out of memory
+            }
         }
     }
 
