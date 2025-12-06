@@ -167,6 +167,16 @@ void free(void *ptr)
         return;
     }
 
+    Block *block_ptr = (Block *) ptr - 1;
+
+    if (block_ptr->magic != MAGIC_NUMBER)
+    {
+        log_message("[VOIDSTAR] Error: Invalid pointer passed to free!");
+        return;
+    }
+
+    block_ptr->free = 1;
+
     log_message("[VOIDSTAR] Freeing memory...");
 }
 
