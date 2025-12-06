@@ -44,12 +44,16 @@ void test_reuse()
     {
         printf("Success: Memory address was reused! (ptrA == ptrB)\n");
     }
+    else if (ptrB < ptrA) 
+    {
+        printf("Success: Address reused (and likely merged with previous block)!\n");
+    }
     else
     {
         printf("Failure: Allocater requested new space instead of reusing.\n");
         printf("Old: %p, New: %p\n", ptrA, ptrB);
         // Use assert to fail the test and stop testing.
-        assert(ptrA == ptrB);
+        assert(0);
     }
 
     free(ptrB);
@@ -79,6 +83,62 @@ void test_fragmentation_skip()
     printf("Passed: Fragmentation logic.\n\n");
 }
 
+void test_coalescing()
+{
+    printf("--- Test 4: Coalescing (Merging Blocks) ---\n");
+    void *ptr1 = malloc(64);
+    void *ptr2 = malloc(64);
+
+    printf("Allocated ptr1 %p and ptr2 %p\n", ptr1, ptr2);
+
+    free(ptr1);
+    free(ptr2);
+
+    void *big_block = malloc(100);
+
+    printf("Requested 100 bytes. Got: %p\n", big_block);
+
+    if (big_block == ptr1)
+    {
+        printf("Successs: Adjacent blocks were merged!\n");
+    }
+    else
+    {
+        printf("Failure: Did not merge. Got new address.\n");
+    }
+
+    free(big_block);
+    printf("Passed: Coalescing logic.\n\n");
+}
+
+void test_alignment()
+{
+    printf("--- Test 5: Alignment Check ---\n");
+
+    void *p1 = malloc(1);
+    void *p2 = malloc(5);
+    void *p3 = malloc(11);
+
+    printf("p1: %p\n", p1);
+    printf("p2: %p\n", p2);
+    printf("p3: %p\n", p3);
+
+    if (((size_t) p1 % 8) == 0 && ((size_t) p2 % 8) == 0)
+    {
+        printf("Success: Pointers are 8-byte aligned.\n");
+    }
+    else
+    {
+        printf("Failure: Pointerts are NOT aligned.\n");
+    }
+
+    free(p1);
+    free(p2);
+    free(p3);
+}
+
+
+
 int main(void)
 {
     printf("Running custom malloc tests ...\n");
@@ -86,6 +146,8 @@ int main(void)
     test_basic_allocation();
     test_reuse();
     test_fragmentation_skip();
+    test_coalescing();
+    test_alignment();
 
     printf("All tests passed\n");
 

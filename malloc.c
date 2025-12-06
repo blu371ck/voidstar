@@ -21,6 +21,9 @@ typedef struct block
 
 #define META_SIZE sizeof(struct block)
 #define MAGIC_NUMBER 0x12345678
+#define ALIGNMENT 8
+#define ALIGN(size) (((size) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1))
+#define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
 /* --- Global Variables --- */
 
@@ -123,6 +126,31 @@ static Block *find_free_block(Block **last, size_t size)
     return current;
 }
 
+/**
+ * coalesce
+ * * Traverses the linked list and merges adjacent free blocks.
+ * * This combates external fragmentation.
+ */
+static void coalesce()
+{
+    Block *curr = global_base;
+
+    while (curr && curr->next)
+    {
+        // If this block is free AND the next block is free...
+        if (curr->free && curr->next->free)
+        {
+            curr->size += curr->next->size + META_SIZE;
+            curr->next = curr->next->next;
+        }
+        else
+        {
+            curr = curr->next;
+        }
+    }
+}
+
+
 /* --- Public API --- */
 
 /**
@@ -142,10 +170,12 @@ void *malloc(size_t size)
         return NULL;
     }
 
+    size_t aligned_size = ALIGN(size);
+
     // First allocation: Initialize the heap.
     if (global_base == NULL)
     {
-        block = request_space(NULL, size);
+        block = request_space(NULL, aligned_size);
 
         if (!block)
         {
@@ -159,18 +189,18 @@ void *malloc(size_t size)
         Block *last = global_base;
 
         // Attempt to find a free block to reuse
-        block = find_free_block(&last, size);
+        block = find_free_block(&last, aligned_size);
 
         // If one is found
         if (block)
         {
             block->free = 0;
-            block->magic = 0x77777777; // Different magic number for freed blocks.
+            block->magic = MAGIC_NUMBER; // Different magic number for freed blocks.
         }
         // One is not found
         else
         {
-            block = request_space(last, size);
+            block = request_space(last, aligned_size);
 
             if (!block)
             {
@@ -205,7 +235,8 @@ void free(void *ptr)
     }
 
     block_ptr->free = 1;
-
     log_message("[VOIDSTAR] Freeing memory...");
+
+    coalesce();
 }
 
