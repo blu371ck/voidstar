@@ -1,0 +1,24 @@
+*.d
+
+# Object files
+*.o
+*.obj
+
+# Shared Libraries
+*.so
+*.dylib
+*.dll
+
+# Executables
+test_bin
+*.out
+*.exe
+
+# Debugging
+*.dSYM/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_STORE
