@@ -7,7 +7,7 @@ void free(void *ptr);
 
 void test_basic_allocation()
 {
-    printf("--- Test 1: Basic allocation ---\n");
+    printf("\n--- Test 1: Basic allocation ---\n");
     int *ptr1 = malloc(sizeof(int));
     assert(ptr1 != NULL);
     *ptr1 = 42;
@@ -26,7 +26,7 @@ void test_basic_allocation()
 
 void test_reuse()
 {
-    printf("--- Test 2: Memory Reuse (First Fit) ---\n");
+    printf("\n--- Test 2: Memory Reuse (First Fit) ---\n");
     char *ptrA = malloc(128);
     assert(ptrA != NULL);
     printf("1. Allocated 128 bytes at %p\n", ptrA);
@@ -62,7 +62,7 @@ void test_reuse()
 
 void test_fragmentation_skip()
 {
-    printf("--- Test 3: Skipping too-small blocks ---\n");
+    printf("\n--- Test 3: Skipping too-small blocks ---\n");
     void *small = malloc(8);
     printf("Allocated small block at %p\n", small);
 
@@ -85,7 +85,7 @@ void test_fragmentation_skip()
 
 void test_coalescing()
 {
-    printf("--- Test 4: Coalescing (Merging Blocks) ---\n");
+    printf("\n--- Test 4: Coalescing (Merging Blocks) ---\n");
     void *ptr1 = malloc(64);
     void *ptr2 = malloc(64);
 
@@ -98,14 +98,7 @@ void test_coalescing()
 
     printf("Requested 100 bytes. Got: %p\n", big_block);
 
-    if (big_block == ptr1)
-    {
-        printf("Successs: Adjacent blocks were merged!\n");
-    }
-    else
-    {
-        printf("Failure: Did not merge. Got new address.\n");
-    }
+    assert(big_block == ptr1);
 
     free(big_block);
     printf("Passed: Coalescing logic.\n\n");
@@ -113,7 +106,7 @@ void test_coalescing()
 
 void test_alignment()
 {
-    printf("--- Test 5: Alignment Check ---\n");
+    printf("\n--- Test 5: Alignment Check ---\n");
 
     void *p1 = malloc(1);
     void *p2 = malloc(5);
@@ -123,15 +116,8 @@ void test_alignment()
     printf("p2: %p\n", p2);
     printf("p3: %p\n", p3);
 
-    if (((size_t) p1 % 8) == 0 && ((size_t) p2 % 8) == 0)
-    {
-        printf("Success: Pointers are 8-byte aligned.\n");
-    }
-    else
-    {
-        printf("Failure: Pointerts are NOT aligned.\n");
-    }
-
+    assert(((size_t) p1 % 8) == 0 && ((size_t) p2 % 8) == 0);
+    printf("Alignment check passed!\n\n");
     free(p1);
     free(p2);
     free(p3);
@@ -139,16 +125,12 @@ void test_alignment()
 
 void test_calloc()
 {
-    printf("--- Test 6: Calloc (Zero Initialization) ---\n");
+    printf("\n--- Test 6: Calloc (Zero Initialization) ---\n");
     int *arr = calloc(10, sizeof(int));
 
-    if (arr == NULL)
-    {
-        printf("Failure: Calloc returned NULL\n");
-        return;
-    }
-
+    assert(arr != NULL);
     int is_clean = 1;
+
     for (int i = 0; i < 10; i++)
     {
         if (arr[i] != 0)
@@ -159,13 +141,39 @@ void test_calloc()
         }
     }
 
-    if (is_clean)
-    {
-        printf("Success: Memory was successfully zeroed out.\n");
-    }
-
+    assert(is_clean);
     free(arr);
     printf("Passed: Calloc logic.\n\n");
+}
+
+void test_realloc()
+{
+    printf("\n--- Test 7: Realloc (Expansion and Copy) ---\n");
+    int *arr = malloc(2 * sizeof(int));
+    arr[0] = 10;
+    arr[1] = 20;
+    printf("Original Array: [%d, %d] at %p\n", arr[0], arr[1], arr);
+
+    // Reallocate to hold 4 integers
+    int *new_arr = realloc(arr, 4 * sizeof(int));
+
+    assert(new_arr != NULL);
+
+    printf("New array location: %p\n", new_arr);
+
+    // Verify old data exists
+    assert(new_arr[0] == 10);
+    assert(new_arr[1] == 20);
+
+    // Verify we can use new space.
+    new_arr[2] = 30;
+    new_arr[3] = 40;
+    assert(new_arr[2] == 30);
+    assert(new_arr[3] == 40);
+    printf("Full array: [%d, %d, %d, %d]\n", new_arr[0], new_arr[1], new_arr[2], new_arr[3]);
+
+    free(new_arr);
+    printf("Passed: Realloc logic.\n\n");
 }
 
 
@@ -180,6 +188,7 @@ int main(void)
     test_coalescing();
     test_alignment();
     test_calloc();
+    test_realloc();
 
     printf("All tests passed\n");
 

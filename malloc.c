@@ -275,3 +275,56 @@ void *calloc(size_t nmemb, size_t size)
 
     return ptr;
 }
+
+/**
+ * realloc
+ * * Resizes a memory block.
+ * * @param ptr Pointer to the existing memory block.
+ * * @param size The new size requested.
+ * @return Pointer to the new memory block, or NULL on failure.
+ */
+void *realloc(void *ptr, size_t size)
+{
+    // If the pointer is null, act like malloc
+    if (!ptr)
+    {
+        return malloc(size);
+    }
+
+    // If size is 0, act like free
+    if (size == 0)
+    {
+        free(ptr);
+        return NULL;
+    }
+
+    Block *block_ptr = (Block *) ptr - 1;
+
+    // Security check
+    if (block_ptr->magic != MAGIC_NUMBER)
+    {
+        // The pointer was not allocated by our code.
+        return NULL;
+    }
+
+    // If new size is smaller or equal to current size, we can just return the same
+    // pointer.
+    if (block_ptr->size >= size)
+    {
+        return ptr;
+    }
+
+    // If there is a need to exapnd. 
+    void *new_ptr = malloc(size);
+
+    if (!new_ptr)
+    {
+        return NULL; // Allocation failed, original block is untouched.
+    }
+
+    // Copy old data into new space
+    memcpy(new_ptr, ptr, block_ptr->size);
+    free(ptr);
+
+    return new_ptr;
+}
