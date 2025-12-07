@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdlib.h> // Only used for standard definitions, not for the real malloc.
 #include <errno.h> // Good for handling sbrk errors
+#include <string.h> // required for memset
+#include <stdint.h> // required for SIZE_MAX
 
 /* --- Data Structures --- */
 
@@ -240,3 +242,36 @@ void free(void *ptr)
     coalesce();
 }
 
+/**
+ * calloc
+ * * allocates a contiguous allocation of free memory and clears it.
+ * * @param nmemb The number of members for the contiguous allocation.
+ * * @param size The size of each member.
+ * @return Pointer to allocated memory, or NULL.
+ */
+void *calloc(size_t nmemb, size_t size)
+{
+    // Edge case when zeros are passed.
+    if (nmemb == 0 || size == 0)
+    {
+        return NULL;
+    }
+
+    // Check if overflow would occur and exit if so.
+    if (size > SIZE_MAX / nmemb)
+    {
+        return NULL; // NULL indicates failure
+    }
+
+    size_t total_size = nmemb * size;
+    void *ptr = malloc(total_size);
+
+    if (ptr == NULL)
+    {
+        return NULL;
+    }
+
+    memset(ptr, 0, total_size);
+
+    return ptr;
+}

@@ -137,6 +137,37 @@ void test_alignment()
     free(p3);
 }
 
+void test_calloc()
+{
+    printf("--- Test 6: Calloc (Zero Initialization) ---\n");
+    int *arr = calloc(10, sizeof(int));
+
+    if (arr == NULL)
+    {
+        printf("Failure: Calloc returned NULL\n");
+        return;
+    }
+
+    int is_clean = 1;
+    for (int i = 0; i < 10; i++)
+    {
+        if (arr[i] != 0)
+        {
+            is_clean = 0;
+            printf("Failure: Index %d is not zero! Value: %d\n", i, arr[i]);
+            break;
+        }
+    }
+
+    if (is_clean)
+    {
+        printf("Success: Memory was successfully zeroed out.\n");
+    }
+
+    free(arr);
+    printf("Passed: Calloc logic.\n\n");
+}
+
 
 
 int main(void)
@@ -148,6 +179,7 @@ int main(void)
     test_fragmentation_skip();
     test_coalescing();
     test_alignment();
+    test_calloc();
 
     printf("All tests passed\n");
 
