@@ -176,6 +176,42 @@ void test_realloc()
     printf("Passed: Realloc logic.\n\n");
 }
 
+void test_splitting()
+{
+    printf("\n--- Test 8: Block splitting ---\n");
+    void *big = malloc(512);
+    printf("Allocated big block at %p\n", big);
+
+    free(big);
+
+    // If splitting works, this will take the first part of the 512 hole.
+    void *small1 = malloc(128);
+    printf("Allocated small block 1 at %p\n", small1);
+
+    void *small2 = malloc(128);
+    printf("Allocated small block 2 at %p\n", small2);
+
+    if (small1 == big)
+    {
+        if (small2 > small1 && (char *) small2 < (char *) small1 + 512)
+        {
+            printf("Success: The second block fits inside the original big block\n");
+        }
+        else
+        {
+            printf("Failure: Secodnd block was allocated outside the split zone.\n");
+        }
+    }
+    else
+    {
+        printf("Failure: First block didn't reuse the freed space.\n");
+    }
+
+    free(small1);
+    free(small2);
+    printf("Passed: Splitting logic\n\n");
+}
+
 
 
 int main(void)
@@ -189,6 +225,7 @@ int main(void)
     test_alignment();
     test_calloc();
     test_realloc();
+    test_splitting();
 
     printf("All tests passed\n");
 

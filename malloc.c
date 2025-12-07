@@ -129,6 +129,34 @@ static Block *find_free_block(Block **last, size_t size)
 }
 
 /**
+ * split_block
+ * * Checks if a block can be split into two.
+ * * If the block is significantly larger than the requested size,
+ * * we shrink the current block and create a new free block in
+ * * the remaining space.
+ * * @param slot The block we found that is currently free.
+ * * @param size The aligned size the user actually requested.
+ */
+static void split_block(Block *slot, size_t size)
+{
+    if (slot->size >= size + META_SIZE + 8)
+    {
+        // Cast to char *, to ensure we get bytes not struct-sizes.
+        Block *new_block = (Block *)((char *) slot + META_SIZE + size);
+
+        new_block->size = slot->size - size - META_SIZE;
+        new_block->next = slot->next;
+        new_block->free = 1;
+        new_block->magic = MAGIC_NUMBER;
+
+        slot->size = size;
+        slot->next = new_block;
+
+        log_message("[VOIDSTAR] Block successfully split.");
+    }
+}
+
+/**
  * coalesce
  * * Traverses the linked list and merges adjacent free blocks.
  * * This combates external fragmentation.
@@ -196,6 +224,9 @@ void *malloc(size_t size)
         // If one is found
         if (block)
         {
+            // Try to split the block before we mark it as used.
+            split_block(block, aligned_size);
+            
             block->free = 0;
             block->magic = MAGIC_NUMBER; // Different magic number for freed blocks.
         }
